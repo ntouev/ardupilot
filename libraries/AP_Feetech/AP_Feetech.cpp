@@ -8,11 +8,8 @@ Feetech *Feetech::_singleton;
 
 Feetech::Feetech()
 {
-    // sending a message in console from here breaks USB com for some reason
-    // gcs().send_text(MAV_SEVERITY_CRITICAL, "feetech constructor!");
-
-    // also initializing the uart variable here results in issues (nullptr)
-    // probably the uart is not ready yet
+    // 1. sending a message in console from here breaks USB com for some reason
+    // 2. also initializing the uart variable here results in issues (nullptr)
 
     // The above occur most probably due to the serial drivers not having 
     // loaded up to the moment this constructor is called.
@@ -21,23 +18,27 @@ Feetech::Feetech()
 
 void Feetech::init() 
 {
-    // if (_uart != nullptr) {
+    // if (_uart != nullptr) {          // probably useless
     //     return;
     // }
     
     _uart = hal.serial(SERIAL_PORT);
 
     if (_uart == nullptr) {
-        gcs().send_text(MAV_SEVERITY_INFO, "Feetech: Initialization of Serial %d failed!", SERIAL_PORT);
+        // messages from init() are not logged, perhaps becasuse it runs before other important 
+        // system initializations. If init() is called from main loop then they are logged correctly!
+        
+        // gcs().send_text(MAV_SEVERITY_INFO, "Feetech: Initialization of Serial %d failed!", SERIAL_PORT);
         return;
     }
 
-    _uart->set_flow_control(AP_HAL::UARTDriver::FLOW_CONTROL_ENABLE);
-    // _uart->set_unbuffered_writes(true);
-    // _uart->set_options(AP_HAL::UARTDriver::OPTION_HDPLEX);
+    _uart->set_flow_control(AP_HAL::UARTDriver::FLOW_CONTROL_DISABLE);  // probably useless
+    // _uart->set_unbuffered_writes(true);                              // enable if 0x4000020 int. error fixed
+    // _uart->set_options(AP_HAL::UARTDriver::OPTION_HDPLEX);           // enable if DMA support for Half duplex 
     _uart->begin(BAUD_RATE);
 
-    gcs().send_text(MAV_SEVERITY_INFO, "Feetech: Initialized Serial %d", SERIAL_PORT);
+    // same as above
+    // gcs().send_text(MAV_SEVERITY_INFO, "Feetech: Initialized Serial %d", SERIAL_PORT);
     _init_done = true;
 }
 
@@ -46,7 +47,7 @@ void Feetech::send_pos_cmd(uint8_t id, uint16_t pos)
     Tx_packet<POS_CMD> msg = Tx_packet<POS_CMD>{id, POS_CMD{pos}};
     uint8_t *bytes = (uint8_t *)&msg;
     _uart->write(bytes, 13);
-    _uart->flush();
+    _uart->flush();     // not sure if needed
 }
 
 void Feetech::send_status_query(uint8_t id)
@@ -54,69 +55,102 @@ void Feetech::send_status_query(uint8_t id)
     Tx_packet<STATUS_QUERY> msg = Tx_packet<STATUS_QUERY>{id, STATUS_QUERY{}};
     uint8_t *bytes = (uint8_t *)&msg;
     _uart->write(bytes, 8);
-    _uart->flush();
+    _uart->flush();     // not sure if needed
 }
 
-bool Feetech::response_valid()
+bool Feetech::sanity_check()
 {
-    if (std::memcmp(_rx_buf, _chck_buf1, 11) != 0) {
-        return false;
-    }
-    if (std::memcmp((_rx_buf+14), _chck_buf2, 11) != 0) {
+    if (_pos[0] < 2000 || _pos[0] > 2100 || _pos[1] < 2000 || _pos[1] > 2100) {
+        gcs().send_text(MAV_SEVERITY_EMERGENCY, "ERROR! pos1 = %d, pos2 = %d", _pos[0], _pos[1]);
+        gcs().send_text(MAV_SEVERITY_INFO, 
+                        "%d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+                        _rx_buf[0], _rx_buf[1], _rx_buf[2], _rx_buf[3], _rx_buf[4], 
+                        _rx_buf[5], _rx_buf[6], _rx_buf[7], _rx_buf[8], _rx_buf[9],
+                        _rx_buf[10], _rx_buf[11], _rx_buf[12], _rx_buf[13]);
+        gcs().send_text(MAV_SEVERITY_INFO,
+                        "%d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+                        _rx_buf[14], _rx_buf[15], _rx_buf[16], _rx_buf[17], _rx_buf[18], 
+                        _rx_buf[19], _rx_buf[20], _rx_buf[21], _rx_buf[22], _rx_buf[23],
+                        _rx_buf[24], _rx_buf[25], _rx_buf[26], _rx_buf[27]);
         return false;
     }
 
     return true;
 }
 
+bool Feetech::response_valid()
+{
+    uint8_t sum;
+    uint8_t checksum;
+    
+    // crc check message 2
+    sum = 0;
+    for (u_int8_t i = 8; i < 13; i++) {
+        sum = sum + _rx_buf[i];
+    }
+    checksum = ~sum;
+    if (checksum != _rx_buf[13]) {
+        return false;
+    }
+    
+    // crc check message 4
+    sum = 0;
+    for (u_int8_t i = 8+14; i < 13+14; i++) {
+        sum = sum + _rx_buf[i];
+    }
+    checksum = ~sum;
+    if (checksum != _rx_buf[13+14]) {
+        return false;
+    }
+
+    // check the rest of the bytes that are known a-priori
+    if (std::memcmp(_rx_buf, _chck_buf1, 11) != 0) {
+        return false;
+    }
+    if (std::memcmp((_rx_buf+14), _chck_buf2, 11) != 0) {
+        return false;
+    }
+    
+    return true;
+}
+
 void Feetech::update()
 {
+    // every delay put here  is crucial to be kept! If you want to change
+    // to implement a new loop rate test thorougly!
     if (!_init_done) {
         init();
         return;
     }
 
+    // SEND MESSAGES
     send_pos_cmd(SERVO_ID_1, 2048);
     send_status_query(SERVO_ID_1);
-    hal.scheduler->delay_microseconds(1245); //1200 ok --> Hz, 1500 even better! --> ~330 Hz
+    hal.scheduler->delay_microseconds(1215);
+    
     send_pos_cmd(SERVO_ID_2, 2048);
     send_status_query(SERVO_ID_2);
-    hal.scheduler->delay_microseconds(1245); //1200 ok --> Hz, 1500 even better! --> ~330 Hz
+    hal.scheduler->delay_microseconds(1215);
 
     // GET REPLIES
-    _n_bytes = _uart->available();
-    _uart->read(_rx_buf, _n_bytes);
+    // _n_bytes = _uart->available();   // probably useless
+    _uart->read(_rx_buf, sizeof(_rx_buf));
 
-    if (response_valid() == false) {
-        _uart->discard_input();
-        _err_cnt = _err_cnt +1;
-        // gcs().send_text(MAV_SEVERITY_INFO, "%d", _n_bytes);
-    }
-    else {
+    if (response_valid() == true) {
         _pos[0] = (_rx_buf[12] << 8) + _rx_buf[11];
         _pos[1] = (_rx_buf[26] << 8) + _rx_buf[25];
         
-        // include sanity check here as soon as I have the first flight data
-        // this is just for testing
-        if (_pos[0] < 2000 || _pos[0] > 2100 || _pos[1] < 2000 || _pos[1] > 2100) {
+        // improve sanity check!!
+        if (sanity_check() == true) {
+            gcs().send_named_float("POS1", _pos[0]);
+            gcs().send_named_float("POS2", _pos[1]);
+        } else {
             _pos_err_cnt = _pos_err_cnt + 1;
-            gcs().send_text(MAV_SEVERITY_EMERGENCY, "ERROR! pos1 = %d, pos2 = %d", _pos[0], _pos[1]);
         }
-
-        // gcs().send_text(MAV_SEVERITY_INFO, "pos1 = %d, pos2 = %d", _pos[0], _pos[1]);
-        gcs().send_named_float("POS1", _pos[0]); // ~ 15 usec each
-        gcs().send_named_float("POS2", _pos[1]); // ~ 15 usec each
-        
-        // gcs().send_text(MAV_SEVERITY_INFO, 
-        //                 "%d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-        //                 _rx_buf[0], _rx_buf[1], _rx_buf[2], _rx_buf[3], _rx_buf[4], 
-        //                 _rx_buf[5], _rx_buf[6], _rx_buf[7], _rx_buf[8], _rx_buf[9],
-        //                 _rx_buf[10], _rx_buf[11], _rx_buf[12], _rx_buf[13]);
-        // gcs().send_text(MAV_SEVERITY_INFO,
-        //                 "%d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-        //                 _rx_buf[14], _rx_buf[15], _rx_buf[16], _rx_buf[17], _rx_buf[18], 
-        //                 _rx_buf[19], _rx_buf[20], _rx_buf[21], _rx_buf[22], _rx_buf[23],
-        //                 _rx_buf[24], _rx_buf[25], _rx_buf[26], _rx_buf[27]);
+    }
+    else {
+        _uart->discard_input();
+        _err_cnt = _err_cnt +1;
     }
  
     gcs().send_named_float("ERR_CNT", _err_cnt);

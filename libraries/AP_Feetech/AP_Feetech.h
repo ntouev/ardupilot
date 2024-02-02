@@ -28,13 +28,12 @@ public:
 private:    
     uint8_t _err_cnt = 0;
     uint16_t _pos_err_cnt = 0;
-    uint8_t _n_bytes;
+    // uint8_t _n_bytes;        // probably useless
     static Feetech *_singleton;
     AP_HAL::UARTDriver *_uart;
     bool _init_done = false;
 
-
-    uint8_t _rx_buf[50];
+    uint8_t _rx_buf[2*14];
     uint16_t _pos[2];
     uint8_t _chck_buf1[11] = {0xff, 0xff, 0x01, 0x02, 0x00, 0xfc, 0xff, 0xff, 0x01, 0x04 ,0x00};
     uint8_t _chck_buf2[11] = {0xff, 0xff, 0x02, 0x02, 0x00, 0xfb, 0xff, 0xff, 0x02, 0x04 ,0x00};
@@ -92,6 +91,7 @@ private:
     void send_pos_cmd(uint8_t id, uint16_t pos);
     void send_status_query(uint8_t id);
     bool response_valid();
+    bool sanity_check();
 
 protected:
 
