@@ -57,10 +57,20 @@ void Feetech::send_status_query(uint8_t id)
     _uart->flush();
 }
 
+bool Feetech::response_valid()
+{
+    if (std::memcmp(_rx_buf, _chck_buf1, 11) != 0) {
+        return false;
+    }
+    if (std::memcmp((_rx_buf+14), _chck_buf2, 11) != 0) {
+        return false;
+    }
+
+    return true;
+}
+
 void Feetech::update()
 {
-    uint8_t n_bytes;
-
     if (!_init_done) {
         init();
         return;
@@ -68,29 +78,35 @@ void Feetech::update()
 
     send_pos_cmd(SERVO_ID_1, 2048);
     send_status_query(SERVO_ID_1);
-    hal.scheduler->delay_microseconds(1500); //1200 ok --> Hz, 1500 even better! --> ~330 Hz
+    hal.scheduler->delay_microseconds(1245); //1200 ok --> Hz, 1500 even better! --> ~330 Hz
     send_pos_cmd(SERVO_ID_2, 2048);
     send_status_query(SERVO_ID_2);
-    hal.scheduler->delay_microseconds(1500); //1200 ok --> Hz, 1500 even better! --> ~330 Hz
+    hal.scheduler->delay_microseconds(1245); //1200 ok --> Hz, 1500 even better! --> ~330 Hz
 
     // GET REPLIES
-    n_bytes = _uart->available();
-    if (n_bytes != 28) {
+    _n_bytes = _uart->available();
+    _uart->read(_rx_buf, _n_bytes);
+
+    if (response_valid() == false) {
         _uart->discard_input();
-        _cnt = _cnt +1;
-        gcs().send_text(MAV_SEVERITY_INFO, "%d", n_bytes);
+        _err_cnt = _err_cnt +1;
+        // gcs().send_text(MAV_SEVERITY_INFO, "%d", _n_bytes);
     }
     else {
-        _uart->read(_rx_buf, n_bytes);
         _pos[0] = (_rx_buf[12] << 8) + _rx_buf[11];
         _pos[1] = (_rx_buf[26] << 8) + _rx_buf[25];
+        
+        // include sanity check here as soon as I have the first flight data
+        // this is just for testing
+        if (_pos[0] < 2000 || _pos[0] > 2100 || _pos[1] < 2000 || _pos[1] > 2100) {
+            _pos_err_cnt = _pos_err_cnt + 1;
+            gcs().send_text(MAV_SEVERITY_EMERGENCY, "ERROR! pos1 = %d, pos2 = %d", _pos[0], _pos[1]);
+        }
+
         // gcs().send_text(MAV_SEVERITY_INFO, "pos1 = %d, pos2 = %d", _pos[0], _pos[1]);
         gcs().send_named_float("POS1", _pos[0]); // ~ 15 usec each
         gcs().send_named_float("POS2", _pos[1]); // ~ 15 usec each
         
-        if (_pos[0] < 2000 || _pos[0] > 2100 || _pos[1] < 2000 || _pos[1] > 2100) {
-            _pos_cnt = _pos_cnt + 1;
-        }
         // gcs().send_text(MAV_SEVERITY_INFO, 
         //                 "%d %d %d %d %d %d %d %d %d %d %d %d %d %d",
         //                 _rx_buf[0], _rx_buf[1], _rx_buf[2], _rx_buf[3], _rx_buf[4], 
@@ -103,6 +119,6 @@ void Feetech::update()
         //                 _rx_buf[24], _rx_buf[25], _rx_buf[26], _rx_buf[27]);
     }
  
-    gcs().send_named_float("CNT", _cnt);
-    gcs().send_named_float("OS_CNT", _pos_cnt);
+    gcs().send_named_float("ERR_CNT", _err_cnt);
+    gcs().send_named_float("POS_ERR_CNT", _pos_err_cnt);
 }

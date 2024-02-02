@@ -3,9 +3,10 @@
 #include <AP_HAL/AP_HAL.h>
 #include <AP_Math/AP_Math.h>
 #include <AP_Math/crc.h>
+#include <cstring>
 
 static constexpr uint32_t BAUD_RATE = 500000;
-static constexpr uint8_t  SERIAL_PORT = 4; // use a port with DMA
+static constexpr uint8_t  SERIAL_PORT = 4; // use a port with DMA change it also in SerialManager!!
 static constexpr uint8_t  SERVO_ID_1 = 1;
 static constexpr uint8_t  SERVO_ID_2 = 2;
 
@@ -25,14 +26,18 @@ public:
     void pre_arm_check();
 
 private:    
-    uint8_t _cnt = 0;
-    uint8_t _pos_cnt = 0;
+    uint8_t _err_cnt = 0;
+    uint16_t _pos_err_cnt = 0;
+    uint8_t _n_bytes;
     static Feetech *_singleton;
     AP_HAL::UARTDriver *_uart;
     bool _init_done = false;
 
-    uint8_t _rx_buf[100];
+
+    uint8_t _rx_buf[50];
     uint16_t _pos[2];
+    uint8_t _chck_buf1[11] = {0xff, 0xff, 0x01, 0x02, 0x00, 0xfc, 0xff, 0xff, 0x01, 0x04 ,0x00};
+    uint8_t _chck_buf2[11] = {0xff, 0xff, 0x02, 0x02, 0x00, 0xfb, 0xff, 0xff, 0x02, 0x04 ,0x00};
 
     template <typename T>
     class PACKED Tx_packet {
@@ -86,6 +91,7 @@ private:
     void init();
     void send_pos_cmd(uint8_t id, uint16_t pos);
     void send_status_query(uint8_t id);
+    bool response_valid();
 
 protected:
 
