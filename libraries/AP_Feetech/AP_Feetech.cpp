@@ -126,7 +126,8 @@ void Feetech::update()
     // SEND MESSAGES
     send_pos_cmd(SERVO_ID_1, 2048);
     send_status_query(SERVO_ID_1);
-    hal.scheduler->delay_microseconds(1215);
+    // tested down to 1210, without 4*gcs().. -> 1240, ~4*13usec
+    hal.scheduler->delay_microseconds(1215); 
     
     send_pos_cmd(SERVO_ID_2, 2048);
     send_status_query(SERVO_ID_2);
