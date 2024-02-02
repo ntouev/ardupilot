@@ -102,6 +102,7 @@ public:
       thread is relative to
      */
     enum priority_base {
+        PRIORITY_FEETECH,
         PRIORITY_BOOST,
         PRIORITY_MAIN,
         PRIORITY_SPI,

@@ -395,6 +395,9 @@ void AP_SerialManager::init()
 
     // initialise serial ports
     for (uint8_t i=1; i<SERIALMANAGER_NUM_PORTS; i++) {
+        if (i == 4)
+            continue;
+
         auto *uart = hal.serial(i);
 
         if (uart != nullptr) {

@@ -22,6 +22,7 @@
 
 #define CHIBIOS_SCHEDULER_MAX_TIMER_PROCS 8
 
+#define APM_FEETECH_PRIORITY    185
 #define APM_MONITOR_PRIORITY    183
 #define APM_MAIN_PRIORITY       180
 #define APM_TIMER_PRIORITY      181
@@ -78,6 +79,10 @@
 
 #ifndef MONITOR_THD_WA_SIZE
 #define MONITOR_THD_WA_SIZE 1024
+#endif
+
+#ifndef FEETECH_THD_WA_SIZE
+#define FEETECH_THD_WA_SIZE 2048
 #endif
 
 /* Scheduler implementation: */
@@ -160,6 +165,7 @@ private:
     volatile bool _in_io_proc;
     uint32_t last_watchdog_pat_ms;
 
+    thread_t* _feetech_thread_ctx;
     thread_t* _timer_thread_ctx;
     thread_t* _rcout_thread_ctx;
     thread_t* _rcin_thread_ctx;
@@ -175,6 +181,7 @@ private:
     // calculates an integer to be used as the priority for a newly-created thread
     uint8_t calculate_thread_priority(priority_base base, int8_t priority) const;
 
+    static void _feetech_thread(void *arg);
     static void _timer_thread(void *arg);
     static void _rcout_thread(void *arg);
     static void _rcin_thread(void *arg);

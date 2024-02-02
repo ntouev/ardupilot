@@ -14,8 +14,10 @@
  *
  * Code by Andrew Tridgell and Siddharth Bharat Purohit
  */
-
+#include <AP_Feetech/AP_Feetech.h>
 #include <AP_HAL/AP_HAL_Boards.h>
+
+#include <GCS_MAVLink/GCS.h>
 
 #ifndef HAL_SCHEDULER_ENABLED
 #define HAL_SCHEDULER_ENABLED 1
@@ -77,6 +79,7 @@ THD_WORKING_AREA(_storage_thread_wa, STORAGE_THD_WA_SIZE);
 #ifndef HAL_NO_MONITOR_THREAD
 THD_WORKING_AREA(_monitor_thread_wa, MONITOR_THD_WA_SIZE);
 #endif
+THD_WORKING_AREA(_feetech_thread_wa, FEETECH_THD_WA_SIZE);
 
 Scheduler::Scheduler()
 {
@@ -139,7 +142,12 @@ void Scheduler::init()
                      _storage_thread,             /* Thread function.       */
                      this);                  /* Thread parameter.      */
 #endif
-
+   
+    _feetech_thread_ctx = chThdCreateStatic(_feetech_thread_wa,
+                                    sizeof(_feetech_thread_wa),
+                                    APM_FEETECH_PRIORITY,        /* Initial priority.    */
+                                    _feetech_thread,             /* Thread function.     */
+                                    this);                       /* Thread parameter.    */
 }
 
 void Scheduler::delay_microseconds(uint16_t usec)
@@ -345,6 +353,23 @@ void Scheduler::_timer_thread(void *arg)
         if (sched->in_expected_delay()) {
             sched->watchdog_pat();
         }
+    }
+}
+
+void Scheduler::_feetech_thread(void *arg)
+{
+    Feetech feetech;
+
+    Scheduler *sched = (Scheduler *)arg;
+    chRegSetThreadName("feetech");
+    
+    while (!sched->_hal_initialized) {
+        sched->delay_microseconds(20000);
+    }
+    while (true) {
+        uint32_t last_timestamp_us = AP_HAL::micros();
+        feetech.update();
+        gcs().send_named_float("FEETECH_THD_US", AP_HAL::micros() - last_timestamp_us);
     }
 }
 
@@ -655,6 +680,7 @@ uint8_t Scheduler::calculate_thread_priority(priority_base base, int8_t priority
         priority_base base;
         uint8_t p;
     } priority_map[] = {
+        { PRIORITY_FEETECH, APM_FEETECH_PRIORITY},
         { PRIORITY_BOOST, APM_MAIN_PRIORITY_BOOST},
         { PRIORITY_MAIN, APM_MAIN_PRIORITY},
         { PRIORITY_SPI, APM_SPI_PRIORITY},
