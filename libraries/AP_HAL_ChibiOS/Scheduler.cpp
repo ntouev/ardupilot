@@ -366,6 +366,12 @@ void Scheduler::_feetech_thread(void *arg)
     while (!sched->_hal_initialized) {
         sched->delay_microseconds(20000);
     }
+
+    // wait 5 sec. give time for the messages in init to be printed in the gcs
+    for (uint16_t i = 0; i< 5000; i++) {
+        sched->delay_microseconds(1000);
+    }
+
     while (true) {
         uint32_t last_timestamp_us = AP_HAL::micros();
         feetech.update();

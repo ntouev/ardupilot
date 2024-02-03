@@ -24,11 +24,8 @@ void Feetech::init()
     
     _uart = hal.serial(SERIAL_PORT);
 
-    if (_uart == nullptr) {
-        // messages from init() are not logged, perhaps becasuse it runs before other important 
-        // system initializations. If init() is called from main loop then they are logged correctly!
-        
-        // gcs().send_text(MAV_SEVERITY_INFO, "Feetech: Initialization of Serial %d failed!", SERIAL_PORT);
+    if (_uart == nullptr) {        
+        gcs().send_text(MAV_SEVERITY_INFO, "Feetech: Initialization of Serial %d failed!", SERIAL_PORT);
         return;
     }
 
@@ -38,7 +35,7 @@ void Feetech::init()
     _uart->begin(BAUD_RATE);
 
     // same as above
-    // gcs().send_text(MAV_SEVERITY_INFO, "Feetech: Initialized Serial %d", SERIAL_PORT);
+    gcs().send_text(MAV_SEVERITY_INFO, "Feetech: Initialized Serial %d", SERIAL_PORT);
     _init_done = true;
 }
 
