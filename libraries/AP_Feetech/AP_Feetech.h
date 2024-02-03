@@ -5,7 +5,7 @@
 #include <AP_Math/crc.h>
 #include <cstring>
 
-static constexpr uint32_t BAUD_RATE = 500000;
+static constexpr uint32_t BAUD_RATE = 1000000;
 static constexpr uint8_t  SERIAL_PORT = 4; // use a port with DMA change it also in SerialManager!!
 static constexpr uint8_t  SERVO_ID_1 = 1;
 static constexpr uint8_t  SERVO_ID_2 = 2;

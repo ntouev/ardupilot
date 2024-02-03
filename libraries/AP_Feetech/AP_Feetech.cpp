@@ -126,6 +126,7 @@ void Feetech::update()
     // SEND MESSAGES
     send_pos_cmd(SERVO_ID_1, 2048);
     send_status_query(SERVO_ID_1);
+    // 966 for 500 Hz, 1215 for 400 Hz
     // tested down to 1210, without 4*gcs().. -> 1240, ~4*13usec
     hal.scheduler->delay_microseconds(1215); 
     
