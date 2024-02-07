@@ -18,6 +18,8 @@ Feetech::Feetech()
 
 void Feetech::init() 
 {
+    // hal.gpio->pinMode(59, HAL_GPIO_OUTPUT); // S10
+
     // if (_uart != nullptr) {          // probably useless
     //     return;
     // }
@@ -121,12 +123,14 @@ void Feetech::update()
     }
 
     // SEND MESSAGES
+    // hal.gpio->toggle(59);
     send_pos_cmd(SERVO_ID_1, 2048);
     send_status_query(SERVO_ID_1);
     // 966 for 500 Hz, 1215 for 400 Hz, 591  for 800 Hz
     // tested down to 1210, without 4*gcs().. -> 1240, ~4*13usec
     hal.scheduler->delay_microseconds(591); 
     
+    // hal.gpio->toggle(59);
     send_pos_cmd(SERVO_ID_2, 2048);
     send_status_query(SERVO_ID_2);
     hal.scheduler->delay_microseconds(591);
