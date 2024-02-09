@@ -25,6 +25,8 @@ public:
     void update();
     void pre_arm_check();
 
+    static uint16_t delta[2];
+
 private:    
     uint8_t _err_cnt = 0;
     uint16_t _pos_err_cnt = 0;

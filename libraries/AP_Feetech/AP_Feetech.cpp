@@ -115,8 +115,6 @@ bool Feetech::response_valid()
 
 void Feetech::update()
 {
-    // every delay put here  is crucial to be kept! If you want to change
-    // to implement a new loop rate test thorougly!
     if (!_init_done) {
         init();
         return;
@@ -126,17 +124,14 @@ void Feetech::update()
     // hal.gpio->toggle(59);
     send_pos_cmd(SERVO_ID_1, 2048);
     send_status_query(SERVO_ID_1);
-    // 966 for 500 Hz, 1215 for 400 Hz, 591  for 800 Hz
-    // tested down to 1210, without 4*gcs().. -> 1240, ~4*13usec
-    hal.scheduler->delay_microseconds(591); 
+    hal.scheduler->delay_microseconds(500); 
     
     // hal.gpio->toggle(59);
     send_pos_cmd(SERVO_ID_2, 2048);
     send_status_query(SERVO_ID_2);
-    hal.scheduler->delay_microseconds(591);
+    hal.scheduler->delay_microseconds(500);
 
     // GET REPLIES
-    // _n_bytes = _uart->available();   // probably useless
     _uart->read(_rx_buf, sizeof(_rx_buf));
 
     if (response_valid() == true) {
@@ -145,8 +140,9 @@ void Feetech::update()
         
         // improve sanity check!!
         if (sanity_check() == true) {
-            gcs().send_named_float("POS1", _pos[0]);
-            gcs().send_named_float("POS2", _pos[1]);
+            // convert raw position to deflection angle delta
+            Feetech::delta[0] = _pos[0];
+            Feetech::delta[1] = _pos[1];
         } else {
             _pos_err_cnt = _pos_err_cnt + 1;
         }
