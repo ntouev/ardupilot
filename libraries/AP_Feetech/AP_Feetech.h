@@ -1,6 +1,7 @@
 #pragma once
 
 #include <AP_HAL/AP_HAL.h>
+#include <SRV_Channel/SRV_Channel.h>
 #include <AP_Math/AP_Math.h>
 #include <AP_Math/crc.h>
 #include <cstring>
@@ -9,6 +10,7 @@ static constexpr uint32_t BAUD_RATE = 1000000;
 static constexpr uint8_t  SERIAL_PORT = 4; // use a port with DMA change it also in SerialManager!!
 static constexpr uint8_t  SERVO_ID_1 = 1;
 static constexpr uint8_t  SERVO_ID_2 = 2;
+static constexpr uint16_t FEETECH_LOOP_MS = 1250; // for 800Hz
 
 class Feetech
 {
@@ -94,6 +96,7 @@ private:
     void send_status_query(uint8_t id);
     bool response_valid();
     bool sanity_check();
+    uint16_t rc2srv_defl(uint8_t ch);
 
 protected:
 

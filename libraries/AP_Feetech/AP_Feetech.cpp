@@ -113,6 +113,17 @@ bool Feetech::response_valid()
     return true;
 }
 
+uint16_t Feetech::rc2srv_defl(uint8_t ch)
+{
+    SRV_Channel *c = SRV_Channels::srv_channel(ch);
+    uint16_t pwm = c->get_output_pwm();
+    uint16_t min = c->get_output_min();
+    uint16_t max = c->get_output_max();
+    float v = float(pwm - min) / (max - min);
+    
+    return v * 4096;
+}
+
 void Feetech::update()
 {
     if (!_init_done) {
@@ -120,14 +131,20 @@ void Feetech::update()
         return;
     }
 
+    uint16_t left_servo_defl = rc2srv_defl(2); // Channel 3
+    gcs().send_named_float("SERVO_L", left_servo_defl);
+
+    uint16_t right_servo_defl = rc2srv_defl(3);
+    gcs().send_named_float("SERVO_R", right_servo_defl);
+
     // SEND MESSAGES
     // hal.gpio->toggle(59);
-    send_pos_cmd(SERVO_ID_1, 2048);
+    send_pos_cmd(SERVO_ID_1, left_servo_defl);
     send_status_query(SERVO_ID_1);
     hal.scheduler->delay_microseconds(500); 
     
     // hal.gpio->toggle(59);
-    send_pos_cmd(SERVO_ID_2, 2048);
+    send_pos_cmd(SERVO_ID_2, right_servo_defl);
     send_status_query(SERVO_ID_2);
     hal.scheduler->delay_microseconds(500);
 
