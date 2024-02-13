@@ -59,20 +59,20 @@ void Feetech::send_status_query(uint8_t id)
 
 bool Feetech::sanity_check()
 {
-    if (_pos[0] < 2000 || _pos[0] > 2100 || _pos[1] < 2000 || _pos[1] > 2100) {
-        gcs().send_text(MAV_SEVERITY_EMERGENCY, "ERROR! pos1 = %d, pos2 = %d", _pos[0], _pos[1]);
-        gcs().send_text(MAV_SEVERITY_INFO, 
-                        "%d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-                        _rx_buf[0], _rx_buf[1], _rx_buf[2], _rx_buf[3], _rx_buf[4], 
-                        _rx_buf[5], _rx_buf[6], _rx_buf[7], _rx_buf[8], _rx_buf[9],
-                        _rx_buf[10], _rx_buf[11], _rx_buf[12], _rx_buf[13]);
-        gcs().send_text(MAV_SEVERITY_INFO,
-                        "%d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-                        _rx_buf[14], _rx_buf[15], _rx_buf[16], _rx_buf[17], _rx_buf[18], 
-                        _rx_buf[19], _rx_buf[20], _rx_buf[21], _rx_buf[22], _rx_buf[23],
-                        _rx_buf[24], _rx_buf[25], _rx_buf[26], _rx_buf[27]);
-        return false;
-    }
+    // if (_pos[0] < 2000 || _pos[0] > 2100 || _pos[1] < 2000 || _pos[1] > 2100) {
+    //     gcs().send_text(MAV_SEVERITY_EMERGENCY, "ERROR! pos1 = %d, pos2 = %d", _pos[0], _pos[1]);
+    //     gcs().send_text(MAV_SEVERITY_INFO, 
+    //                     "%d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+    //                     _rx_buf[0], _rx_buf[1], _rx_buf[2], _rx_buf[3], _rx_buf[4], 
+    //                     _rx_buf[5], _rx_buf[6], _rx_buf[7], _rx_buf[8], _rx_buf[9],
+    //                     _rx_buf[10], _rx_buf[11], _rx_buf[12], _rx_buf[13]);
+    //     gcs().send_text(MAV_SEVERITY_INFO,
+    //                     "%d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+    //                     _rx_buf[14], _rx_buf[15], _rx_buf[16], _rx_buf[17], _rx_buf[18], 
+    //                     _rx_buf[19], _rx_buf[20], _rx_buf[21], _rx_buf[22], _rx_buf[23],
+    //                     _rx_buf[24], _rx_buf[25], _rx_buf[26], _rx_buf[27]);
+    //     return false;
+    // }
 
     return true;
 }
