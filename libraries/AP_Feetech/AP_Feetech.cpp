@@ -33,9 +33,9 @@ void Feetech::init()
 
     _uart->set_flow_control(AP_HAL::UARTDriver::FLOW_CONTROL_DISABLE);  // probably useless
     // _uart->set_unbuffered_writes(true);                              // if set here --> internal error 0x4000020
-    // _uart->set_options(AP_HAL::UARTDriver::OPTION_HDPLEX);           // enable if DMA support for Half duplex 
     _uart->begin(BAUD_RATE);
     _uart->set_unbuffered_writes(true);                                 // if set here no internal error!
+    // _uart->set_options(AP_HAL::UARTDriver::OPTION_HDPLEX);              // enable if DMA support for Half duplex 
     
     gcs().send_text(MAV_SEVERITY_INFO, "Feetech: Initialized Serial %d", SERIAL_PORT);
     _init_done = true;
