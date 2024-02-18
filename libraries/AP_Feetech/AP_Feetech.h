@@ -79,7 +79,7 @@ private:
         uint8_t address {0x2A};
         uint8_t pos[2];
         uint8_t time[2] {0x00, 0x00};
-        uint8_t speed[2] {0xE8, 0x03};
+        uint8_t speed[2] {0x00, 0x00};
     };
 
     class PACKED STATUS_QUERY {
