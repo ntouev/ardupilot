@@ -139,8 +139,7 @@ void Feetech::update()
 
     // SEND MESSAGES
     // hal.gpio->toggle(59);
-    // left servo is mounted reversed: 2047-(value-2047) instead of 2047+(value-2047)
-    send_pos_cmd(SERVO_ID_1, 4094 - left_servo_defl); 
+    send_pos_cmd(SERVO_ID_1, left_servo_defl); 
     send_status_query(SERVO_ID_1);
     hal.scheduler->delay_microseconds(500); 
     
