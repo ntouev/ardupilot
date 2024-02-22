@@ -30,10 +30,10 @@ public:
 
     void update();
     void update_backend();
-    void pre_arm_check();
 
     static uint16_t delta[2];
     static semaphore_t sync_sem;
+    static bool init_done;
 
 private:    
     uint8_t _err_cnt = 0;
@@ -41,7 +41,6 @@ private:
     // uint8_t _n_bytes;        // probably useless
     static Feetech *_singleton;
     AP_HAL::UARTDriver *_uart;
-    bool _init_done = false;
 
     uint8_t _rx_buf[2*14];
     uint16_t _pos[2];

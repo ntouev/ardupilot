@@ -8,6 +8,7 @@ Feetech *Feetech::_singleton;
 
 uint16_t Feetech::delta[2];
 semaphore_t Feetech::sync_sem;
+bool Feetech::init_done = false;
 
 Feetech::Feetech()
 {
@@ -30,7 +31,7 @@ void Feetech::init()
     _uart = hal.serial(SERIAL_PORT);
 
     if (_uart == nullptr) {        
-        gcs().send_text(MAV_SEVERITY_INFO, "Feetech: Initialization of Serial %d failed!", SERIAL_PORT);
+        gcs().send_text(MAV_SEVERITY_INFO, "FEETECH: Initialization of Serial %d failed!", SERIAL_PORT);
         return;
     }
 
@@ -40,8 +41,8 @@ void Feetech::init()
     _uart->set_unbuffered_writes(true);                                 // if set here no internal error!
     // _uart->set_options(AP_HAL::UARTDriver::OPTION_HDPLEX);              // enable if DMA support for Half duplex 
     
-    gcs().send_text(MAV_SEVERITY_INFO, "Feetech: Initialized Serial %d", SERIAL_PORT);
-    _init_done = true;
+    gcs().send_text(MAV_SEVERITY_INFO, "FEETECH: Initialized Serial %d", SERIAL_PORT);
+    Feetech::init_done = true;
 
     chSemObjectInit(&Feetech::sync_sem, 0);
 }
@@ -129,14 +130,20 @@ uint16_t Feetech::rc2srv_defl(uint8_t chan)
     return v * 4096;
 }
 
+// this method runs in main thread in SRV_Channels::push()
+// triggering the backend method update_backend() in feetech thread
 void Feetech::update()
 {
+    if (!Feetech::init_done) {
+        return;
+    }
     chSemReset(&Feetech::sync_sem, 0);
 }
 
+// this method runs in feetech thread
 void Feetech::update_backend()
 {
-    if (!_init_done) {
+    if (!Feetech::init_done) {
         init();
         return;
     }

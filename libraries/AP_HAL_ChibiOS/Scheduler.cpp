@@ -367,10 +367,10 @@ void Scheduler::_feetech_thread(void *arg)
         sched->delay_microseconds(20000);
     }
 
-    // // wait 5 sec. give time for the messages in init to be printed in the gcs
-    // for (uint16_t i = 0; i< 5000; i++) {
-    //     sched->delay_microseconds(1000);
-    // }
+    // wait 5 sec. give time for the messages in init to be printed in the gcs
+    for (uint16_t i = 0; i< 5000; i++) {
+        sched->delay_microseconds(1000);
+    }
 
     while (true) {
         feetech.update_backend();
