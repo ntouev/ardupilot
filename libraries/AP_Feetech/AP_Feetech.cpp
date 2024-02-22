@@ -6,6 +6,9 @@ const extern AP_HAL::HAL& hal;
 
 Feetech *Feetech::_singleton;
 
+uint16_t Feetech::delta[2];
+semaphore_t Feetech::sync_sem;
+
 Feetech::Feetech()
 {
     // 1. sending a message in console from here breaks USB com for some reason
@@ -39,6 +42,8 @@ void Feetech::init()
     
     gcs().send_text(MAV_SEVERITY_INFO, "Feetech: Initialized Serial %d", SERIAL_PORT);
     _init_done = true;
+
+    chSemObjectInit(&Feetech::sync_sem, 0);
 }
 
 void Feetech::send_pos_cmd(uint8_t id, uint16_t pos)
@@ -113,9 +118,9 @@ bool Feetech::response_valid()
     return true;
 }
 
-uint16_t Feetech::rc2srv_defl(uint8_t ch)
+uint16_t Feetech::rc2srv_defl(uint8_t chan)
 {
-    SRV_Channel *c = SRV_Channels::srv_channel(ch);
+    SRV_Channel *c = SRV_Channels::srv_channel(chan);
     uint16_t pwm = c->get_output_pwm();
     uint16_t min = c->get_output_min();
     uint16_t max = c->get_output_max();
@@ -124,12 +129,19 @@ uint16_t Feetech::rc2srv_defl(uint8_t ch)
     return v * 4096;
 }
 
+void Feetech::wake_up(void)
+{
+    chSemReset(&Feetech::sync_sem, 0);
+}
+
 void Feetech::update()
 {
     if (!_init_done) {
         init();
         return;
     }
+
+    chSemWait(&Feetech::sync_sem);
 
     uint16_t left_servo_defl = rc2srv_defl(2); // Channel 3
     gcs().send_named_float("SERVO_L", left_servo_defl);

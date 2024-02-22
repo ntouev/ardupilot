@@ -25,6 +25,8 @@
 #include "SRV_Channel.h"
 #include <AP_Logger/AP_Logger.h>
 
+#include <AP_Feetech/AP_Feetech.h>
+
 #if HAL_MAX_CAN_PROTOCOL_DRIVERS
   #include <AP_CANManager/AP_CANManager.h>
   #include <AP_UAVCAN/AP_UAVCAN.h>
@@ -506,6 +508,7 @@ void SRV_Channels::cork()
 /*
   wrapper around hal.rcout->push()
  */
+Feetech feetech;
 void SRV_Channels::push()
 {
     hal.rcout->push();
@@ -533,6 +536,8 @@ void SRV_Channels::push()
 #if AP_FETTEC_ONEWIRE_ENABLED
     fetteconwire_ptr->update();
 #endif
+
+    feetech.wake_up();
 
 #if HAL_CANMANAGER_ENABLED
     // push outputs to CAN

@@ -6,6 +6,10 @@
 #include <AP_Math/crc.h>
 #include <cstring>
 
+#undef ENABLE
+#undef DISABLE
+#include <hal.h>
+
 static constexpr uint32_t BAUD_RATE = 1000000;
 static constexpr uint8_t  SERIAL_PORT = 4; // use a port with DMA change it also in SerialManager!!
 static constexpr uint8_t  SERVO_ID_1 = 1;
@@ -26,8 +30,10 @@ public:
 
     void update();
     void pre_arm_check();
+    void wake_up();
 
     static uint16_t delta[2];
+    static semaphore_t sync_sem;
 
 private:    
     uint8_t _err_cnt = 0;
@@ -96,7 +102,7 @@ private:
     void send_status_query(uint8_t id);
     bool response_valid();
     bool sanity_check();
-    uint16_t rc2srv_defl(uint8_t ch);
+    uint16_t rc2srv_defl(uint8_t chan);
 
 protected:
 
