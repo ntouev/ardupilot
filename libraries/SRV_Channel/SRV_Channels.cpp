@@ -47,6 +47,8 @@ extern const AP_HAL::HAL& hal;
 SRV_Channel *SRV_Channels::channels;
 SRV_Channels *SRV_Channels::_singleton;
 
+Feetech *feetech_ptr;
+
 #if AP_VOLZ_ENABLED
 AP_Volz_Protocol *SRV_Channels::volz_ptr;
 #endif
@@ -508,10 +510,11 @@ void SRV_Channels::cork()
 /*
   wrapper around hal.rcout->push()
  */
-Feetech *feetech;
 void SRV_Channels::push()
 {
     hal.rcout->push();
+
+    feetech_ptr->update();
 
 #if AP_VOLZ_ENABLED
     // give volz library a chance to update
@@ -536,8 +539,6 @@ void SRV_Channels::push()
 #if AP_FETTEC_ONEWIRE_ENABLED
     fetteconwire_ptr->update();
 #endif
-
-    feetech->update();
 
 #if HAL_CANMANAGER_ENABLED
     // push outputs to CAN
