@@ -508,7 +508,7 @@ void SRV_Channels::cork()
 /*
   wrapper around hal.rcout->push()
  */
-Feetech feetech;
+Feetech *feetech;
 void SRV_Channels::push()
 {
     hal.rcout->push();
@@ -537,7 +537,7 @@ void SRV_Channels::push()
     fetteconwire_ptr->update();
 #endif
 
-    feetech.wake_up();
+    feetech->update();
 
 #if HAL_CANMANAGER_ENABLED
     // push outputs to CAN

@@ -373,12 +373,7 @@ void Scheduler::_feetech_thread(void *arg)
     // }
 
     while (true) {
-        // uint32_t last_timestamp_us = AP_HAL::micros();
-        
-        feetech.update();
-        
-        // sched->delay_microseconds(FEETECH_LOOP_MS - AP_HAL::micros() + last_timestamp_us);
-        // gcs().send_named_float("FEETECH_THD_US", AP_HAL::micros() - last_timestamp_us);
+        feetech.update_backend();
     }
 }
 

@@ -29,8 +29,8 @@ public:
     }
 
     void update();
+    void update_backend();
     void pre_arm_check();
-    void wake_up();
 
     static uint16_t delta[2];
     static semaphore_t sync_sem;

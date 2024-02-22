@@ -129,12 +129,12 @@ uint16_t Feetech::rc2srv_defl(uint8_t chan)
     return v * 4096;
 }
 
-void Feetech::wake_up(void)
+void Feetech::update()
 {
     chSemReset(&Feetech::sync_sem, 0);
 }
 
-void Feetech::update()
+void Feetech::update_backend()
 {
     if (!_init_done) {
         init();
