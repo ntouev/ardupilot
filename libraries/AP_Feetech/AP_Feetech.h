@@ -14,7 +14,8 @@ static constexpr uint32_t BAUD_RATE = 1000000;
 static constexpr uint8_t  SERIAL_PORT = 4; // use a port with DMA change it also in SerialManager!!
 static constexpr uint8_t  SERVO_ID_1 = 1;
 static constexpr uint8_t  SERVO_ID_2 = 2;
-static constexpr uint16_t FEETECH_LOOP_MS = 1250; // for 800Hz
+static constexpr uint16_t  TX_DELAY = 500; // 0 error rate; 400 has an acceptable error rate
+static constexpr uint16_t  RX_DELAY = 500;
 
 class Feetech
 {
@@ -38,7 +39,8 @@ public:
 private:    
     uint8_t _err_cnt = 0;
     uint16_t _pos_err_cnt = 0;
-    // uint8_t _n_bytes;        // probably useless
+    uint16_t _stat_cnt = 0;
+
     static Feetech *_singleton;
     AP_HAL::UARTDriver *_uart;
 

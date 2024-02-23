@@ -12,21 +12,12 @@ bool Feetech::init_done = false;
 
 Feetech::Feetech()
 {
-    // 1. sending a message in console from here breaks USB com for some reason
-    // 2. also initializing the uart variable here results in issues (nullptr)
-
-    // The above occur most probably due to the serial drivers not having 
-    // loaded up to the moment this constructor is called.
     _singleton = this;
 }
 
 void Feetech::init() 
 {
     // hal.gpio->pinMode(59, HAL_GPIO_OUTPUT); // S10
-
-    // if (_uart != nullptr) {          // probably useless
-    //     return;
-    // }
     
     _uart = hal.serial(SERIAL_PORT);
 
@@ -36,10 +27,9 @@ void Feetech::init()
     }
 
     _uart->set_flow_control(AP_HAL::UARTDriver::FLOW_CONTROL_DISABLE);  // probably useless
-    // _uart->set_unbuffered_writes(true);                              // if set here --> internal error 0x4000020
     _uart->begin(BAUD_RATE);
-    _uart->set_unbuffered_writes(true);                                 // if set here no internal error!
-    // _uart->set_options(AP_HAL::UARTDriver::OPTION_HDPLEX);              // enable if DMA support for Half duplex 
+    _uart->set_unbuffered_writes(true);                                 // if set somewhere above -> internal error 
+    // _uart->set_options(AP_HAL::UARTDriver::OPTION_HDPLEX);           // enable if DMA support for Half duplex 
     
     gcs().send_text(MAV_SEVERITY_INFO, "FEETECH: Initialized Serial %d", SERIAL_PORT);
     Feetech::init_done = true;
@@ -127,7 +117,7 @@ uint16_t Feetech::rc2srv_defl(uint8_t chan)
     uint16_t max = c->get_output_max();
     float v = float(pwm - min) / (max - min);
     
-    return v * 4096;
+    return v * 4095;
 }
 
 // this method runs in main thread in SRV_Channels::push()
@@ -151,22 +141,21 @@ void Feetech::update_backend()
     chSemWait(&Feetech::sync_sem);
 
     uint16_t left_servo_defl = rc2srv_defl(2); // Channel 3
-    gcs().send_named_float("SERVO_L", left_servo_defl);
-
     uint16_t right_servo_defl = rc2srv_defl(3);
-    gcs().send_named_float("SERVO_R", right_servo_defl);
 
     // SEND MESSAGES
     // hal.gpio->toggle(59);
     send_pos_cmd(SERVO_ID_1, left_servo_defl); 
     send_status_query(SERVO_ID_1);
-    hal.scheduler->delay_microseconds(500); 
+    
+    hal.scheduler->delay_microseconds(TX_DELAY); 
     
     // hal.gpio->toggle(59);
     send_pos_cmd(SERVO_ID_2, right_servo_defl);
     send_status_query(SERVO_ID_2);
-    hal.scheduler->delay_microseconds(500);
 
+    hal.scheduler->delay_microseconds(RX_DELAY); 
+    
     // GET REPLIES
     _uart->read(_rx_buf, sizeof(_rx_buf));
 
@@ -187,7 +176,14 @@ void Feetech::update_backend()
         _uart->discard_input();
         _err_cnt = _err_cnt +1;
     }
- 
-    gcs().send_named_float("ERR_CNT", _err_cnt);
-    gcs().send_named_float("POS_ERR_CNT", _pos_err_cnt);
+
+    _stat_cnt = _stat_cnt + 1;
+    if (_stat_cnt == 400) {
+        gcs().send_named_float("DELTA1", Feetech::delta[0]);
+        gcs().send_named_float("DELTA2", Feetech::delta[1]);
+        gcs().send_named_float("ERR_CNT", _err_cnt);
+        gcs().send_named_float("POS_ERR_CNT", _pos_err_cnt);
+
+        _stat_cnt = 0;
+    }
 }
