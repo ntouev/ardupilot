@@ -117,7 +117,7 @@ uint16_t Feetech::rc2srv_defl(uint8_t chan)
     uint16_t max = c->get_output_max();
     float v = float(pwm - min) / (max - min);
     
-    return v * 4095;
+    return v * 600 + 1747;
 }
 
 // this method runs in main thread in SRV_Channels::push()
