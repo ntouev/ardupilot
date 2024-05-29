@@ -5,6 +5,7 @@
 #include <AP_Math/AP_Math.h>
 #include <AP_Math/crc.h>
 #include <cstring>
+#include <AP_Logger/AP_Logger.h>
 
 #undef ENABLE
 #undef DISABLE
@@ -37,7 +38,7 @@ public:
     static bool init_done;
 
 private:    
-    uint8_t _err_cnt = 0;
+    uint16_t _err_cnt = 0;
     uint16_t _pos_err_cnt = 0;
     uint16_t _stat_cnt = 0;
 
@@ -104,6 +105,7 @@ private:
     bool response_valid();
     bool sanity_check();
     uint16_t rc2srv_defl(uint8_t chan);
+    void Log_Write_Feetech(uint16_t d[2], uint16_t e);
 
 protected:
 

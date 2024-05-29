@@ -120,6 +120,18 @@ uint16_t Feetech::rc2srv_defl(uint8_t chan)
     return v * 600 + 1747;
 }
 
+void Feetech::Log_Write_Feetech(uint16_t d[2], uint16_t e)
+{
+    struct log_FEET pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_FEET_MSG),
+        time_us  : AP_HAL::micros64(),
+        delta1  : d[0],
+        delta2  : d[1],
+        err_cnt  : e      
+    };
+    AP::logger().WriteBlock(&pkt, sizeof(pkt));
+}
+
 // this method runs in main thread in SRV_Channels::push()
 // triggering the backend method update_backend() in feetech thread
 void Feetech::update()
@@ -168,6 +180,9 @@ void Feetech::update_backend()
             // convert raw position to deflection angle delta
             Feetech::delta[0] = _pos[0];
             Feetech::delta[1] = _pos[1];
+
+            // logging
+            Log_Write_Feetech(Feetech::delta, _err_cnt);
         } else {
             _pos_err_cnt = _pos_err_cnt + 1;
         }
