@@ -33,7 +33,7 @@ public:
     void update();
     void update_backend();
 
-    static uint16_t delta[2];
+    static float delta[2];
     static semaphore_t sync_sem;
     static bool init_done;
 
@@ -105,7 +105,7 @@ private:
     bool response_valid();
     bool sanity_check();
     uint16_t rc2srv_defl(uint8_t chan);
-    void Log_Write_Feetech(uint16_t d[2], uint16_t e);
+    void Log_Write_Feetech(float d[2], uint16_t e);
 
 protected:
 

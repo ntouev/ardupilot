@@ -6,7 +6,7 @@ const extern AP_HAL::HAL& hal;
 
 Feetech *Feetech::_singleton;
 
-uint16_t Feetech::delta[2];
+float Feetech::delta[2];
 semaphore_t Feetech::sync_sem;
 bool Feetech::init_done = false;
 
@@ -120,7 +120,7 @@ uint16_t Feetech::rc2srv_defl(uint8_t chan)
     return v * 600 + 1747;
 }
 
-void Feetech::Log_Write_Feetech(uint16_t d[2], uint16_t e)
+void Feetech::Log_Write_Feetech(float d[2], uint16_t e)
 {
     struct log_FEET pkt = {
         LOG_PACKET_HEADER_INIT(LOG_FEET_MSG),
