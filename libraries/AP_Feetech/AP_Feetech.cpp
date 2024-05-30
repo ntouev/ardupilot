@@ -178,8 +178,8 @@ void Feetech::update_backend()
         // improve sanity check!!
         if (sanity_check() == true) {
             // convert raw position to deflection angle delta
-            Feetech::delta[0] = _pos[0];
-            Feetech::delta[1] = _pos[1];
+            Feetech::delta[0] = 0.090*_pos[0] - 182.001;
+            Feetech::delta[1] = 0.092*_pos[1] + 189.997;
 
             // logging
             Log_Write_Feetech(Feetech::delta, _err_cnt);
