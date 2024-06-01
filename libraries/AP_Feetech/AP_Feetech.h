@@ -104,8 +104,8 @@ private:
     void send_status_query(uint8_t id);
     bool response_valid();
     bool sanity_check();
-    uint16_t rc2srv_defl(uint8_t chan);
-    void Log_Write_Feetech(float d[2], uint16_t e);
+    uint16_t rc2srv(uint8_t chan);
+    void Log_Write_Feetech(uint16_t p[2], uint16_t e);
 
 protected:
 

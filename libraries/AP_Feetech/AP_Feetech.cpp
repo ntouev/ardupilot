@@ -109,7 +109,8 @@ bool Feetech::response_valid()
     return true;
 }
 
-uint16_t Feetech::rc2srv_defl(uint8_t chan)
+// (rc pwm to digital value for servos) mapping
+uint16_t Feetech::rc2srv(uint8_t chan)
 {
     SRV_Channel *c = SRV_Channels::srv_channel(chan);
     uint16_t pwm = c->get_output_pwm();
@@ -117,16 +118,29 @@ uint16_t Feetech::rc2srv_defl(uint8_t chan)
     uint16_t max = c->get_output_max();
     float v = float(pwm - min) / (max - min);
     
-    return v * 600 + 1747;
+    uint16_t ret = -1; 
+    // is it linear? I think yes. Investigate more
+    if (chan == 2) { // left servo
+        ret = v * 733 + 1671;  // 733 (max - min = 2404 - 1671 = 733), 1671 (the min value)
+        if (ret < 1671) {ret = 1671;} // -35 deg
+        if (ret > 2404) {ret = 2404;} // +35 deg
+    } 
+    if (chan == 3) { // right servo
+        ret = v * 729 + 1680;
+        if (ret < 1680) {ret = 1680;} // +35 deg
+        if (ret > 2409) {ret = 2409;} // -35 deg
+    }
+
+    return ret;
 }
 
-void Feetech::Log_Write_Feetech(float d[2], uint16_t e)
+void Feetech::Log_Write_Feetech(uint16_t p[2], uint16_t e)
 {
     struct log_FEET pkt = {
         LOG_PACKET_HEADER_INIT(LOG_FEET_MSG),
         time_us  : AP_HAL::micros64(),
-        delta1  : d[0],
-        delta2  : d[1],
+        pos1    : p[0],
+        pos2    : p[1],
         err_cnt  : e      
     };
     AP::logger().WriteBlock(&pkt, sizeof(pkt));
@@ -152,18 +166,18 @@ void Feetech::update_backend()
 
     chSemWait(&Feetech::sync_sem);
 
-    uint16_t left_servo_defl = rc2srv_defl(2); // Channel 3
-    uint16_t right_servo_defl = rc2srv_defl(3);
+    uint16_t left_servo_cmd = rc2srv(2);  // Channel 3 - Left servo
+    uint16_t right_servo_cmd = rc2srv(3); // Channel 4 - Right servo
 
     // SEND MESSAGES
     // hal.gpio->toggle(59);
-    send_pos_cmd(SERVO_ID_1, left_servo_defl); 
+    send_pos_cmd(SERVO_ID_1, left_servo_cmd); 
     send_status_query(SERVO_ID_1);
     
     hal.scheduler->delay_microseconds(TX_DELAY); 
     
     // hal.gpio->toggle(59);
-    send_pos_cmd(SERVO_ID_2, right_servo_defl);
+    send_pos_cmd(SERVO_ID_2, right_servo_cmd);
     send_status_query(SERVO_ID_2);
 
     hal.scheduler->delay_microseconds(RX_DELAY); 
@@ -178,11 +192,12 @@ void Feetech::update_backend()
         // improve sanity check!!
         if (sanity_check() == true) {
             // convert raw position to deflection angle delta
-            Feetech::delta[0] = 0.090*_pos[0] - 182.001;
-            Feetech::delta[1] = -0.092*_pos[1] + 189.997;
+            // Not exactly linear. Need to replace the calculation below with a precise LUT
+            Feetech::delta[0] = 0.095*_pos[0] - 193.943;
+            Feetech::delta[1] = -0.096*_pos[1] + 196.896;
 
             // logging
-            Log_Write_Feetech(Feetech::delta, _err_cnt);
+            Log_Write_Feetech(_pos, _err_cnt);
         } else {
             _pos_err_cnt = _pos_err_cnt + 1;
         }
@@ -194,8 +209,8 @@ void Feetech::update_backend()
 
     _stat_cnt = _stat_cnt + 1;
     if (_stat_cnt == 400) {
-        gcs().send_named_float("DELTA1", Feetech::delta[0]);
-        gcs().send_named_float("DELTA2", Feetech::delta[1]);
+        gcs().send_named_float("POS1", _pos[0]);
+        gcs().send_named_float("POS2", _pos[1]);
         gcs().send_named_float("ERR_CNT", _err_cnt);
         gcs().send_named_float("POS_ERR_CNT", _pos_err_cnt);
 
