@@ -677,6 +677,8 @@ struct PACKED log_FEET {
     uint64_t time_us;
     uint16_t pos1;
     uint16_t pos2;
+    uint16_t cmd1;
+    uint16_t cmd2;
     uint16_t err_cnt;
 };
 
@@ -1357,7 +1359,7 @@ LOG_STRUCTURE_FROM_AIS \
     { LOG_MOTBATT_MSG, sizeof(log_MotBatt), \
       "MOTB", "QfffffB",  "TimeUS,LiftMax,BatVolt,ThLimit,ThrAvMx,ThrOut,FailFlags", "s------", "F------" , true }, \
     { LOG_FEET_MSG, sizeof(log_FEET), \
-      "FEET", "QHHH",      "TimeUS,Pos1,Pos2,Err", "s---", "F---", true}
+      "FEET", "QHHHHH",      "TimeUS,Pos1,Pos2,Cmd1,Cmd2,Err", "s-----", "F-----", true}
 
 // message types 0 to 63 reserved for vehicle specific use
 

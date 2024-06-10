@@ -47,6 +47,7 @@ private:
 
     uint8_t _rx_buf[2*14];
     uint16_t _pos[2];
+    uint16_t _cmd[2];
     uint8_t _chck_buf1[11] = {0xff, 0xff, 0x01, 0x02, 0x00, 0xfc, 0xff, 0xff, 0x01, 0x04 ,0x00};
     uint8_t _chck_buf2[11] = {0xff, 0xff, 0x02, 0x02, 0x00, 0xfb, 0xff, 0xff, 0x02, 0x04 ,0x00};
 
@@ -105,7 +106,7 @@ private:
     bool response_valid();
     bool sanity_check();
     uint16_t rc2srv(uint8_t chan);
-    void Log_Write_Feetech(uint16_t p[2], uint16_t e);
+    void Log_Write_Feetech(uint16_t p[2], uint16_t c[2], uint16_t e);
 
 protected:
 

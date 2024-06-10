@@ -134,13 +134,15 @@ uint16_t Feetech::rc2srv(uint8_t chan)
     return ret;
 }
 
-void Feetech::Log_Write_Feetech(uint16_t p[2], uint16_t e)
+void Feetech::Log_Write_Feetech(uint16_t p[2], uint16_t c[2], uint16_t e)
 {
     struct log_FEET pkt = {
         LOG_PACKET_HEADER_INIT(LOG_FEET_MSG),
         time_us  : AP_HAL::micros64(),
         pos1    : p[0],
         pos2    : p[1],
+        cmd1    : c[0],
+        cmd2    : c[1],
         err_cnt  : e      
     };
     AP::logger().WriteBlock(&pkt, sizeof(pkt));
@@ -166,18 +168,18 @@ void Feetech::update_backend()
 
     chSemWait(&Feetech::sync_sem);
 
-    uint16_t left_servo_cmd = rc2srv(2);  // Channel 3 - Left servo
-    uint16_t right_servo_cmd = rc2srv(3); // Channel 4 - Right servo
+    _cmd[0] = rc2srv(2);  // Channel 3 - Left servo
+    _cmd[1] = rc2srv(3);  // Channel 4 - Right servo
 
     // SEND MESSAGES
     // hal.gpio->toggle(59);
-    send_pos_cmd(SERVO_ID_1, left_servo_cmd); 
+    send_pos_cmd(SERVO_ID_1, _cmd[0]); 
     send_status_query(SERVO_ID_1);
     
     hal.scheduler->delay_microseconds(TX_DELAY); 
     
     // hal.gpio->toggle(59);
-    send_pos_cmd(SERVO_ID_2, right_servo_cmd);
+    send_pos_cmd(SERVO_ID_2, _cmd[1]);
     send_status_query(SERVO_ID_2);
 
     hal.scheduler->delay_microseconds(RX_DELAY); 
@@ -197,7 +199,7 @@ void Feetech::update_backend()
             Feetech::delta[1] = -0.096*_pos[1] + 196.896;
 
             // logging
-            Log_Write_Feetech(_pos, _err_cnt);
+            Log_Write_Feetech(_pos, _cmd, _err_cnt);
         } else {
             _pos_err_cnt = _pos_err_cnt + 1;
         }
