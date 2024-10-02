@@ -98,13 +98,13 @@ bool Feetech::response_valid()
         return false;
     }
 
-    // check the rest of the bytes that are known a-priori
-    if (std::memcmp(_rx_buf, _chck_buf1, 11) != 0) {
-        return false;
-    }
-    if (std::memcmp((_rx_buf+14), _chck_buf2, 11) != 0) {
-        return false;
-    }
+    // // check the rest of the bytes that are known a-priori
+    // if (std::memcmp(_rx_buf, _chck_buf1, 11) != 0) {
+    //     return false;
+    // }
+    // if (std::memcmp((_rx_buf+14), _chck_buf2, 11) != 0) {
+    //     return false;
+    // }
     
     return true;
 }
@@ -168,8 +168,16 @@ void Feetech::update_backend()
 
     chSemWait(&Feetech::sync_sem);
 
-    _cmd[0] = rc2srv(2);  // Channel 3 - Left servo
-    _cmd[1] = rc2srv(3);  // Channel 4 - Right servo
+    // _cmd[0] = rc2srv(2);  // Channel 3 - Left servo
+    // _cmd[1] = rc2srv(3);  // Channel 4 - Right servo
+
+    if (_odd == true) {
+        _cmd[0] = 1700;
+        _cmd[1] = 1700;
+    } else {
+        _cmd[0] = 2000;
+        _cmd[1] = 2000;
+    }
 
     // SEND MESSAGES
     // hal.gpio->toggle(59);
@@ -217,5 +225,11 @@ void Feetech::update_backend()
         gcs().send_named_float("POS_ERR_CNT", _pos_err_cnt);
 
         _stat_cnt = 0;
+
+        if (_odd == true) {
+            _odd = false;
+        } else {
+            _odd = true;
+        }
     }
 }

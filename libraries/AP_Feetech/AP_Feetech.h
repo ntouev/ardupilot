@@ -38,6 +38,8 @@ public:
     static bool init_done;
 
 private:    
+    bool _odd = true;
+
     uint16_t _err_cnt = 0;
     uint16_t _pos_err_cnt = 0;
     uint16_t _stat_cnt = 0;
