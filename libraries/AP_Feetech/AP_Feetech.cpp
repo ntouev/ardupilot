@@ -119,16 +119,16 @@ uint16_t Feetech::rc2srv(uint8_t chan)
     float v = float(pwm - min) / (max - min);
     
     uint16_t ret = -1; 
-    // is it linear? I think yes. Investigate more
+    // rescale pwm to the acceptable range of the servos digital input
     if (chan == 2) { // left servo
-        ret = v * 733 + 1671;  // 733 (max - min = 2404 - 1671 = 733), 1671 (the min value)
-        if (ret < 1671) {ret = 1671;} // -35 deg
-        if (ret > 2404) {ret = 2404;} // +35 deg
+        ret = v * 910 + 1593;  // 910 (max - min = 2503 - 1593 = 910), 1593 (the min value)
+        if (ret < 1593) {ret = 1593;} // -40 deg
+        if (ret > 2503) {ret = 2503;} // +40 deg
     } 
     if (chan == 3) { // right servo
-        ret = v * 729 + 1680;
-        if (ret < 1680) {ret = 1680;} // +35 deg
-        if (ret > 2409) {ret = 2409;} // -35 deg
+        ret = v * 910 + 1593;
+        if (ret < 1593) {ret = 1593;} // +40 deg
+        if (ret > 2503) {ret = 2503;} // -40 deg
     }
 
     return ret;
@@ -194,9 +194,9 @@ void Feetech::update_backend()
         // improve sanity check!!
         if (sanity_check() == true) {
             // convert raw position to deflection angle delta
-            // Not exactly linear. Need to replace the calculation below with a precise LUT
-            Feetech::delta[0] = 0.095*_pos[0] - 193.943;
-            Feetech::delta[1] = -0.096*_pos[1] + 196.896;
+            // Not correct, need to test
+            // Feetech::delta[0] =  0.08789 * (_pos[0] - 2048);
+            // Feetech::delta[1] = -0.08789 * (_pos[1] - 2048);
 
             // logging
             Log_Write_Feetech(_pos, _cmd, _err_cnt);
